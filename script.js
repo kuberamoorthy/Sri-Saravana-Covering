@@ -6,14 +6,7 @@
 const ADMIN_CREDENTIALS = { username: 'admin', password: 'admin123' };
 const DEFAULT_PHONE = '919843132245';
 
-const DEFAULT_PRODUCTS = [
-    { id: 'p1', name: 'Royal Kundan Bridal Set',    category: 'bridal',   price: 4500, image: 'necklace.png', description: 'Exquisite kundan bridal necklace set with matching earrings. Intricate meenakari work with ruby and emerald stones.' },
-    { id: 'p2', name: 'Temple Gold Chain',           category: 'chains',   price: 1800, image: 'chain.png',    description: 'Traditional temple design gold chain with ornate pendant featuring ruby stone accents.' },
-    { id: 'p3', name: 'Designer Jhumka Earrings',    category: 'earrings', price: 1200, image: 'earrings.png', description: 'Elegant jhumka earrings with pearl and emerald drops. Intricate gold filigree craftsmanship.' },
-    { id: 'p4', name: 'Classic Gold Bangles Set',    category: 'bangles',  price: 2800, image: 'bangles.png',  description: 'Set of 4 gold bangles with intricate floral engravings and stone inlays. Premium micro-plating.' },
-    { id: 'p5', name: 'Diamond Cut Ring',            category: 'rings',    price: 950,  image: 'rings.png',    description: 'Elegant diamond-cut gold ring with CZ stone setting. Available in all sizes.' },
-    { id: 'p6', name: 'Lakshmi Long Necklace',       category: 'necklaces',price: 5200, image: 'necklace.png', description: 'Goddess Lakshmi motif long haram necklace. Temple jewelry tradition with 24k gold plating.' }
-];
+const DEFAULT_PRODUCTS = [];
 
 // ─── FIREBASE INIT ───
 let db = null;
@@ -26,8 +19,34 @@ let fbReady = false;
             firebaseConfig.apiKey !== 'YOUR_API_KEY') {
             if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
             db = firebase.firestore();
-            fbReady = true;
-            console.log('%c✅ Firebase Firestore connected', 'color:#25D366;font-weight:bold');
+            console.log('%c⏳ Checking Firebase Firestore accessibility...', 'color:orange;font-weight:bold');
+            
+            // Perform non-blocking write/read validation with a strict timeout to avoid blocking network delays
+            const accessibilityCheck = db.collection('products').limit(1).get();
+            const timeoutCheck = new Promise((_, reject) => setTimeout(() => reject(new Error('Firebase connection timed out')), 1500));
+            
+            Promise.race([accessibilityCheck, timeoutCheck])
+                .then(() => {
+                    fbReady = true;
+                    console.log('%c✅ Firestore database is fully writeable & online', 'color:#25D366;font-weight:bold');
+                    const badge = document.getElementById('db-badge');
+                    if (badge) badge.style.display = 'inline-flex';
+                    
+                    // Re-render dashboard/products with remote products now that we know Firebase is active
+                    const adminContainer = document.getElementById('admin-products');
+                    if (adminContainer) renderAdminProducts('admin-products');
+                    const publicContainer = document.getElementById('products-grid');
+                    if (publicContainer) {
+                        getProducts().then(products => renderProducts('products-grid', products));
+                    }
+                })
+                .catch(err => {
+                    console.warn('⚠️ Firestore backend is unreachable or disabled in Console:', err.message);
+                    console.warn('%c🔌 Falling back instantly to LocalStorage to ensure high performance', 'color:#E6C280;font-weight:bold');
+                    fbReady = false;
+                    const badge = document.getElementById('db-badge');
+                    if (badge) badge.style.display = 'none';
+                });
         } else {
             console.warn('%c⚠️ Firebase not configured — using localStorage', 'color:orange');
         }
@@ -59,33 +78,42 @@ function compressImage(file, maxW = 800, quality = 0.72) {
 // ─── LOCAL STORAGE ───
 function getProductsLocal() {
     const s = localStorage.getItem('sscc_products');
-    if (!s) { localStorage.setItem('sscc_products', JSON.stringify(DEFAULT_PRODUCTS)); return [...DEFAULT_PRODUCTS]; }
-    return JSON.parse(s);
+    if (!s) { localStorage.setItem('sscc_products', JSON.stringify([])); return []; }
+    let parsed = JSON.parse(s);
+    if (parsed.length > 0) {
+        const filtered = parsed.filter(p => !['p1', 'p2', 'p3', 'p4', 'p5', 'p6'].includes(p.id));
+        if (filtered.length !== parsed.length) {
+            localStorage.setItem('sscc_products', JSON.stringify(filtered));
+            return filtered;
+        }
+    }
+    return parsed;
 }
 function saveProductsLocal(products) { localStorage.setItem('sscc_products', JSON.stringify(products)); }
 function getPhoneLocal() { return localStorage.getItem('sscc_phone') || DEFAULT_PHONE; }
 function setPhoneLocal(p) { localStorage.setItem('sscc_phone', p); }
 
+// ─── TIMEOUT HELPER ───
+function withTimeout(promise, ms = 1500, errorMsg = 'Firebase connection timeout') {
+    return Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error(errorMsg)), ms))
+    ]);
+}
+
 // ─── FIREBASE OPERATIONS ───
 async function fbGetProducts() {
-    const snap = await db.collection('products').orderBy('createdAt', 'desc').get();
+    const snap = await withTimeout(db.collection('products').orderBy('createdAt', 'desc').get(), 1800);
     if (snap.empty) {
-        // Seed defaults on first run
-        const batch = db.batch();
-        DEFAULT_PRODUCTS.forEach(p => {
-            batch.set(db.collection('products').doc(p.id),
-                { ...p, createdAt: firebase.firestore.Timestamp.now() });
-        });
-        await batch.commit();
-        return [...DEFAULT_PRODUCTS];
+        return [];
     }
     return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
-async function fbAddProduct(p)      { return (await db.collection('products').add({ ...p, createdAt: firebase.firestore.FieldValue.serverTimestamp() })).id; }
-async function fbUpdateProduct(id, d){ await db.collection('products').doc(id).update({ ...d, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }); }
-async function fbDeleteProduct(id)   { await db.collection('products').doc(id).delete(); }
-async function fbGetPhone()          { const d = await db.collection('settings').doc('general').get(); return d.exists ? (d.data().phone || DEFAULT_PHONE) : DEFAULT_PHONE; }
-async function fbSetPhone(phone)     { await db.collection('settings').doc('general').set({ phone }, { merge: true }); }
+async function fbAddProduct(p)      { return (await withTimeout(db.collection('products').add({ ...p, createdAt: firebase.firestore.FieldValue.serverTimestamp() }), 1800)).id; }
+async function fbUpdateProduct(id, d){ await withTimeout(db.collection('products').doc(id).update({ ...d, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }), 1800); }
+async function fbDeleteProduct(id)   { await withTimeout(db.collection('products').doc(id).delete(), 1800); }
+async function fbGetPhone()          { const d = await withTimeout(db.collection('settings').doc('general').get(), 1800); return d.exists ? (d.data().phone || DEFAULT_PHONE) : DEFAULT_PHONE; }
+async function fbSetPhone(phone)     { await withTimeout(db.collection('settings').doc('general').set({ phone }, { merge: true }), 1800); }
 
 // ─── UNIFIED API ───
 async function getProducts() {
@@ -112,7 +140,10 @@ function login(user, pass) {
 function logout() { sessionStorage.removeItem('sscc_admin'); window.location.href = 'admin.html'; }
 
 // ─── WHATSAPP ───
-async function bookViaWhatsApp(product) {
+async function bookViaWhatsAppById(productId) {
+    const products = await getProducts();
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
     const phone = await getPhone();
     const msg = `🛒 *Order Enquiry — Sri Saravana Covering*\n\n📦 Item: ${product.name}\n💰 Price: ₹${Number(product.price).toLocaleString('en-IN')}\n🏷️ Category: ${product.category}\n\nI would like to book this item. Please confirm availability.`;
     window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(msg)}`, '_blank');
@@ -138,7 +169,7 @@ function renderProducts(containerId, products) {
                 <p class="price">₹${Number(p.price).toLocaleString('en-IN')}</p>
                 <p class="desc">${p.description}</p>
                 <div class="card-actions">
-                    <button class="btn btn-whatsapp" onclick='bookViaWhatsApp(${JSON.stringify(p).replace(/'/g, "\\'")})'>📱 WhatsApp Book</button>
+                    <button class="btn btn-whatsapp" onclick="bookViaWhatsAppById('${p.id}')">📱 WhatsApp Book</button>
                 </div>
             </div>
         </div>`).join('');
@@ -362,7 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Navbar scroll effect
     window.addEventListener('scroll', () => {
         const nb = document.querySelector('.navbar');
-        if (nb) nb.style.background = window.scrollY > 50 ? 'rgba(255,255,255,0.98)' : 'rgba(255,255,255,0.95)';
+        if (nb) nb.style.background = window.scrollY > 50 ? 'rgba(3, 14, 11, 0.98)' : 'rgba(3, 14, 11, 0.92)';
     });
 
     // Image preview — Add form

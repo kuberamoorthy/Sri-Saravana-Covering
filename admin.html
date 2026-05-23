@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,8 +8,8 @@
     <meta name="description" content="Store management portal for Sri Saravana Chidambaram Fancy Covering.">
     <link rel="stylesheet" href="styles.css">
 </head>
-<body>
 
+<body>
     <!-- NAVBAR -->
     <nav class="navbar">
         <div class="nav-inner">
@@ -84,20 +85,29 @@
         <div class="admin-dashboard">
             <div class="container">
                 <div class="admin-header">
-                    <h1>🛠️ Admin Dashboard</h1>
+                    <h1>🛠️ Admin Dashboard
+                        <span id="db-badge"
+                            style="display:none; font-size:0.6rem; background:#25D366; color:white; padding:4px 8px; border-radius:12px; vertical-align:middle; margin-left:10px; letter-spacing:1px; text-transform:uppercase;">Firebase
+                            Active</span>
+                    </h1>
                     <div class="admin-actions">
-                        <a href="products.html" class="btn btn-outline" style="padding:10px 20px;font-size:0.85rem;">👁️ View Store</a>
-                        <button class="btn btn-danger" style="padding:10px 20px;font-size:0.85rem;" onclick="logout()">🚪 Logout</button>
+                        <a href="products.html" class="btn btn-outline" style="padding:10px 20px;font-size:0.85rem;">👁️
+                            View Store</a>
+                        <button class="btn btn-danger" style="padding:10px 20px;font-size:0.85rem;"
+                            onclick="logout()">🚪 Logout</button>
                     </div>
                 </div>
 
                 <!-- WHATSAPP SETTINGS -->
                 <div class="admin-card">
                     <h3>📱 WhatsApp Booking Number</h3>
-                    <p style="color:var(--text-medium);font-size:0.85rem;margin-bottom:15px;">This number will be used for all WhatsApp booking links on the store.</p>
+                    <p style="color:var(--text-medium);font-size:0.85rem;margin-bottom:15px;">This number will be used
+                        for all WhatsApp booking links on the store.</p>
                     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-                        <input type="text" id="phone-input" placeholder="e.g. 919843132245" style="flex:1;min-width:200px;padding:13px 16px;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-dark);font-family:'Jost';font-size:.9rem;outline:none;">
-                        <button class="btn btn-gold" style="padding:12px 24px;white-space:nowrap;" onclick="updatePhone()">💾 Save Number</button>
+                        <input type="text" id="phone-input" placeholder="e.g. 919843132245"
+                            style="flex:1;min-width:200px;padding:13px 16px;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-dark);font-family:'Jost';font-size:.9rem;outline:none;">
+                        <button class="btn btn-gold" style="padding:12px 24px;white-space:nowrap;"
+                            onclick="updatePhone()">💾 Save Number</button>
                     </div>
                 </div>
 
@@ -107,7 +117,8 @@
                     <form class="product-form" id="addProductForm" onsubmit="addProduct(event)">
                         <div class="form-group">
                             <label for="pname">Product Name</label>
-                            <input type="text" id="pname" name="pname" placeholder="e.g. Royal Kundan Bridal Set" required>
+                            <input type="text" id="pname" name="pname" placeholder="e.g. Royal Kundan Bridal Set"
+                                required>
                         </div>
                         <div class="form-group">
                             <label for="pcategory">Category</label>
@@ -126,8 +137,9 @@
                         </div>
                         <div class="form-group">
                             <label for="pimage">Upload Image</label>
-                            <input type="file" id="pimage" name="pimage" accept="image/*" style="padding:10px;">
-                            <img id="pimage-preview" style="display:none;width:80px;height:80px;object-fit:cover;margin-top:8px;border:1px solid var(--border);">
+                            <input type="file" id="pimage" name="pimage" accept="image/*" style="padding:10px;" required>
+                            <img id="pimage-preview"
+                                style="display:none;width:80px;height:80px;object-fit:cover;margin-top:8px;border:1px solid var(--border);">
                         </div>
                         <div class="form-group full-width">
                             <label for="pdesc">Description</label>
@@ -151,7 +163,8 @@
     <!-- EDIT MODAL -->
     <div class="modal-overlay" id="editModal">
         <div class="modal">
-            <button class="modal-close" onclick="document.getElementById('editModal').classList.remove('active')">&times;</button>
+            <button class="modal-close"
+                onclick="document.getElementById('editModal').classList.remove('active')">&times;</button>
             <h3>✏️ Edit Product</h3>
             <form onsubmit="saveEdit(event)">
                 <input type="hidden" id="edit-id">
@@ -177,7 +190,8 @@
                 <div class="form-group">
                     <label>Upload New Image (optional)</label>
                     <input type="file" id="edit-image" accept="image/*" style="padding:10px;">
-                    <img id="edit-image-preview" style="width:80px;height:80px;object-fit:cover;margin-top:8px;border:1px solid var(--border);">
+                    <img id="edit-image-preview"
+                        style="width:80px;height:80px;object-fit:cover;margin-top:8px;border:1px solid var(--border);">
                 </div>
                 <div class="form-group">
                     <label>Description</label>
@@ -185,7 +199,8 @@
                 </div>
                 <div style="display:flex;gap:10px;margin-top:15px;">
                     <button type="submit" class="btn btn-gold">💾 Save Changes</button>
-                    <button type="button" class="btn btn-outline" onclick="document.getElementById('editModal').classList.remove('active')">Cancel</button>
+                    <button type="button" class="btn btn-outline"
+                        onclick="document.getElementById('editModal').classList.remove('active')">Cancel</button>
                 </div>
             </form>
         </div>
@@ -198,6 +213,9 @@
         </div>
     </footer>
 
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
     <script src="script.js"></script>
     <script>
         function handleLogin(e) {
@@ -213,28 +231,34 @@
             }
         }
 
-        function showDashboard() {
+        async function showDashboard() {
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('adminDashboard').style.display = 'block';
             document.getElementById('adminFooter').style.display = 'block';
 
             // Set phone input
             const phoneInput = document.getElementById('phone-input');
-            if (phoneInput) phoneInput.value = getPhone();
+            if (phoneInput) {
+                const phone = await getPhone();
+                phoneInput.value = phone;
+            }
 
             // Render products
             renderAdminProducts('admin-products');
-            updateCount();
+            await updateCount();
         }
 
-        function updateCount() {
+        async function updateCount() {
             const countEl = document.getElementById('product-count');
-            if (countEl) countEl.textContent = getProducts().length;
+            if (countEl) {
+                const products = await getProducts();
+                countEl.textContent = products.length;
+            }
         }
 
         // Override renderAdminProducts to also update count
         const originalRender = renderAdminProducts;
-        renderAdminProducts = function(id) {
+        renderAdminProducts = function (id) {
             originalRender(id);
             updateCount();
         };
@@ -247,4 +271,5 @@
         });
     </script>
 </body>
+
 </html>
