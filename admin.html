@@ -131,6 +131,12 @@
                                 <option value="rings">Rings</option>
                             </select>
                         </div>
+                        <div class="form-group" id="psize-group" style="display:none;">
+                            <label for="psize">Product Size</label>
+                            <select id="psize" name="psize">
+                                <!-- Dynamic options -->
+                            </select>
+                        </div>
                         <div class="form-group">
                             <label for="pprice">Price (₹)</label>
                             <input type="number" id="pprice" name="pprice" placeholder="e.g. 2500" min="1" required>
@@ -181,6 +187,12 @@
                         <option value="bridal">Bridal Sets</option>
                         <option value="chains">Chains</option>
                         <option value="rings">Rings</option>
+                    </select>
+                </div>
+                <div class="form-group" id="edit-size-group" style="display:none;">
+                    <label>Product Size</label>
+                    <select id="edit-size">
+                        <!-- Dynamic options -->
                     </select>
                 </div>
                 <div class="form-group">
@@ -267,6 +279,22 @@
         document.addEventListener('DOMContentLoaded', () => {
             if (isLoggedIn()) {
                 showDashboard();
+            }
+
+            // Wire up category size triggers
+            const pcat = document.getElementById('pcategory');
+            const psizeGroup = document.getElementById('psize-group');
+            const psize = document.getElementById('psize');
+            if (pcat && psizeGroup && psize) {
+                pcat.addEventListener('change', () => handleCategoryChange(pcat, psizeGroup, psize));
+                handleCategoryChange(pcat, psizeGroup, psize);
+            }
+
+            const editCat = document.getElementById('edit-category');
+            const editSizeGroup = document.getElementById('edit-size-group');
+            const editSize = document.getElementById('edit-size');
+            if (editCat && editSizeGroup && editSize) {
+                editCat.addEventListener('change', () => handleCategoryChange(editCat, editSizeGroup, editSize));
             }
         });
     </script>

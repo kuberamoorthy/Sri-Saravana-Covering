@@ -145,7 +145,8 @@ async function bookViaWhatsAppById(productId) {
     const product = products.find(p => p.id === productId);
     if (!product) return;
     const phone = await getPhone();
-    const msg = `🛒 *Order Enquiry — Sri Saravana Covering*\n\n📦 Item: ${product.name}\n💰 Price: ₹${Number(product.price).toLocaleString('en-IN')}\n🏷️ Category: ${product.category}\n\nI would like to book this item. Please confirm availability.`;
+    const sizeStr = product.size ? ` (Size: ${product.size})` : '';
+    const msg = `🛒 *Order Enquiry — Sri Saravana Covering*\n\n📦 Item: ${product.name}${sizeStr}\n💰 Price: ₹${Number(product.price).toLocaleString('en-IN')}\n🏷️ Category: ${product.category}\n\nI would like to book this item. Please confirm availability.`;
     window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(msg)}`, '_blank');
 }
 
@@ -166,7 +167,10 @@ function renderProducts(containerId, products) {
             <div class="card-body">
                 <h3>${p.name}</h3>
                 <p class="category-tag">${p.category}</p>
-                <p class="price">₹${Number(p.price).toLocaleString('en-IN')}</p>
+                <p class="price">
+                    ₹${Number(p.price).toLocaleString('en-IN')}
+                    ${p.size ? `<span style="font-size:0.8rem;background:rgba(26,86,219,0.06);color:var(--text-dark);padding:2px 8px;border-radius:4px;margin-left:10px;border:1px solid rgba(26,86,219,0.15);">Size: ${p.size}</span>` : ''}
+                </p>
                 <p class="desc">${p.description}</p>
                 <div class="card-actions">
                     <button class="btn btn-whatsapp" onclick="bookViaWhatsAppById('${p.id}')">📱 WhatsApp Book</button>
@@ -194,6 +198,7 @@ function renderAdminProducts(containerId) {
                 <div class="admin-item-info">
                     <h4>${p.name}</h4>
                     <span class="cat">${p.category}</span>
+                    ${p.size ? `<span style="font-size:0.75rem;background:rgba(26,86,219,0.06);color:var(--text-dark);padding:2px 6px;border-radius:4px;margin-left:8px;border:1px solid rgba(26,86,219,0.15);display:inline-block;">Size: ${p.size}</span>` : ''}
                     <p class="price">₹${Number(p.price).toLocaleString('en-IN')}</p>
                 </div>
                 <div class="admin-item-actions">
@@ -219,13 +224,18 @@ async function addProduct(e) {
     if (btn) { btn.disabled = true; btn.textContent = '⏳ Saving...'; }
     try {
         if (fileInput.files && fileInput.files[0]) image = await compressImage(fileInput.files[0]);
+        const cat = form.pcategory.value;
         const product = {
             name: form.pname.value.trim(),
-            category: form.pcategory.value,
+            category: cat,
             price: parseInt(form.pprice.value),
             image,
             description: form.pdesc.value.trim()
         };
+        if (cat === 'rings' || cat === 'bangles') {
+            const sizeEl = document.getElementById('psize');
+            if (sizeEl) product.size = sizeEl.value;
+        }
         if (fbReady) {
             try { product.id = await fbAddProduct(product); }
             catch (e) { product.id = 'p' + Date.now(); const loc = getProductsLocal(); loc.push(product); saveProductsLocal(loc); }
@@ -236,6 +246,9 @@ async function addProduct(e) {
         form.reset();
         const prev = document.getElementById('pimage-preview');
         if (prev) prev.style.display = 'none';
+        // Reset size field display
+        const sizeGroup = document.getElementById('psize-group');
+        if (sizeGroup) sizeGroup.style.display = 'none';
         renderAdminProducts('admin-products');
         showToast('✅ Product saved to ' + (fbReady ? 'Firebase!' : 'local storage!'));
     } catch (err) {
@@ -267,6 +280,18 @@ async function editProduct(id) {
         document.getElementById('edit-category').value = p.category;
         document.getElementById('edit-price').value = p.price;
         document.getElementById('edit-desc').value = p.description;
+        
+        // Handle Size rendering for Edit Modal
+        const editCatSelect = document.getElementById('edit-category');
+        const editSizeGroup = document.getElementById('edit-size-group');
+        const editSizeSelect = document.getElementById('edit-size');
+        if (editCatSelect && editSizeGroup && editSizeSelect) {
+            handleCategoryChange(editCatSelect, editSizeGroup, editSizeSelect);
+            if (p.size) {
+                editSizeSelect.value = p.size;
+            }
+        }
+
         const prev = document.getElementById('edit-image-preview');
         if (prev) { prev.src = p.image; prev.style.display = 'block'; }
         document.getElementById('edit-image').value = '';
@@ -285,19 +310,27 @@ async function saveEdit(e) {
         const existing = products.find(p => p.id === id);
         let image = existing ? existing.image : 'necklace.png';
         if (fileInput.files && fileInput.files[0]) image = await compressImage(fileInput.files[0]);
+        const cat = document.getElementById('edit-category').value;
         const data = {
             name: document.getElementById('edit-name').value.trim(),
-            category: document.getElementById('edit-category').value,
+            category: cat,
             price: parseInt(document.getElementById('edit-price').value),
             image,
             description: document.getElementById('edit-desc').value.trim()
         };
+        if (cat === 'rings' || cat === 'bangles') {
+            const sizeEl = document.getElementById('edit-size');
+            if (sizeEl) data.size = sizeEl.value;
+        } else {
+            // Delete size property if category is changed to a non-sized category
+            data.size = firebase.firestore.FieldValue.delete();
+        }
         if (fbReady) {
             try { await fbUpdateProduct(id, data); }
-            catch (e) { const loc = getProductsLocal(); const i = loc.findIndex(p => p.id === id); if (i !== -1) { loc[i] = { ...loc[i], ...data }; saveProductsLocal(loc); } }
+            catch (e) { const loc = getProductsLocal(); const i = loc.findIndex(p => p.id === id); if (i !== -1) { loc[i] = { ...loc[i], ...data }; delete loc[i].size; saveProductsLocal(loc); } }
         } else {
             const loc = getProductsLocal(); const i = loc.findIndex(p => p.id === id);
-            if (i !== -1) { loc[i] = { ...loc[i], ...data }; saveProductsLocal(loc); }
+            if (i !== -1) { loc[i] = { ...loc[i], ...data }; if (cat !== 'rings' && cat !== 'bangles') delete loc[i].size; saveProductsLocal(loc); }
         }
         document.getElementById('editModal').classList.remove('active');
         renderAdminProducts('admin-products');
@@ -348,6 +381,39 @@ function observeAnimations() {
     document.querySelectorAll('.animate-in').forEach(el => obs.observe(el));
 }
 
+// ─── DYNAMIC SIZING FOR RINGS & BANGLES ───
+function handleCategoryChange(selectEl, groupEl, sEl) {
+    if (!selectEl || !groupEl || !sEl) return;
+    const cat = selectEl.value;
+    if (cat === 'bangles') {
+        groupEl.style.display = 'block';
+        sEl.innerHTML = `
+            <option value="2.2">2.2</option>
+            <option value="2.4">2.4</option>
+            <option value="2.6" selected>2.6</option>
+            <option value="2.8">2.8</option>
+            <option value="2.10">2.10</option>
+            <option value="Adjustable">Adjustable</option>
+            <option value="All Sizes">All Sizes</option>
+        `;
+    } else if (cat === 'rings') {
+        groupEl.style.display = 'block';
+        sEl.innerHTML = `
+            <option value="Adjustable" selected>Adjustable</option>
+            <option value="10">10</option>
+            <option value="12">12</option>
+            <option value="14">14</option>
+            <option value="16">16</option>
+            <option value="18">18</option>
+            <option value="20">20</option>
+            <option value="All Sizes">All Sizes</option>
+        `;
+    } else {
+        groupEl.style.display = 'none';
+        sEl.innerHTML = '';
+    }
+}
+
 // ─── WHATSAPP FLOAT CARD ───
 function toggleWACard() {
     const popup = document.getElementById('waPopup');
@@ -393,7 +459,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Navbar scroll effect
     window.addEventListener('scroll', () => {
         const nb = document.querySelector('.navbar');
-        if (nb) nb.style.background = window.scrollY > 50 ? 'rgba(3, 14, 11, 0.98)' : 'rgba(3, 14, 11, 0.92)';
+        if (nb) nb.style.background = window.scrollY > 50 ? 'rgba(255, 255, 255, 0.98)' : 'rgba(255, 255, 255, 0.95)';
     });
 
     // Image preview — Add form
