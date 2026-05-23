@@ -269,7 +269,7 @@ ul {
     text-align: center;
     padding: 140px 2rem 100px;
     overflow: hidden;
-    background: radial-gradient(circle at 10% 20%, rgba(239, 246, 255, 0.8) 0%, rgba(254, 240, 138, 0.3) 50%, rgba(255, 255, 255, 1) 100%);
+    background: #06090F; /* Deep premium black background */
 }
 
 .hero-bg {
@@ -277,7 +277,7 @@ ul {
     inset: 0;
     background-size: cover;
     background-position: center;
-    opacity: 0.26;
+    opacity: 0.45; /* Enhanced visibility for the gold jewelry background image */
     filter: scale(1.05) blur(1px);
     transition: transform 10s ease;
 }
@@ -289,8 +289,8 @@ ul {
 .hero-overlay {
     position: absolute;
     inset: 0;
-    background: radial-gradient(circle, transparent 30%, rgba(0, 0, 0, 0.35) 90%);
-    box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.7);
+    background: radial-gradient(circle, transparent 20%, rgba(6, 9, 15, 0.5) 75%, rgba(6, 9, 15, 0.95) 100%);
+    box-shadow: inset 0 0 150px rgba(0, 0, 0, 0.95); /* Deep rich black shadow overlay */
     pointer-events: none;
 }
 
@@ -303,35 +303,43 @@ ul {
 .hero-badge {
     display: inline-block;
     padding: 8px 24px;
-    border: 1px solid var(--border);
+    border: 1px solid rgba(250, 204, 21, 0.35); /* Elegant gold border */
     font-size: 0.72rem;
-    color: var(--blue-dark);
+    color: var(--gold-light); /* Luminous Gold text */
     letter-spacing: 4px;
     text-transform: uppercase;
     margin-bottom: 2.5rem;
     animation: fadeInUp 0.8s ease;
-    background: rgba(26, 86, 219, 0.06);
+    background: rgba(250, 204, 21, 0.08); /* Sophisticated subtle gold tint */
     border-radius: 20px;
     font-weight: 600;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .hero h1 {
     font-size: clamp(2.2rem, 5vw, 4rem);
     line-height: 1.25;
     margin-bottom: 1.5rem;
-    color: var(--text-dark);
+    color: #FFFFFF; /* High contrast crisp white for premium readability */
     letter-spacing: 2px;
     animation: fadeInUp 1s cubic-bezier(0.25, 1, 0.5, 1) 0.2s both;
     text-transform: uppercase;
+    text-shadow: 0 4px 15px rgba(0, 0, 0, 0.6); /* High-contrast shadow for text crispness */
+}
+
+.hero h1 em {
+    color: var(--gold-light); /* Gold highlight for focal words */
+    font-style: normal;
 }
 
 .hero p {
-    color: var(--text-medium);
+    color: rgba(255, 255, 255, 0.82); /* Soft premium readable white */
     font-size: 1.1rem;
     margin-bottom: 3rem;
     animation: fadeInUp 1s cubic-bezier(0.25, 1, 0.5, 1) 0.4s both;
     font-weight: 300;
     letter-spacing: 0.5px;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
 }
 
 /* ══════════ BUTTONS ══════════ */
