@@ -6,7 +6,50 @@
 const ADMIN_CREDENTIALS = { username: "admin", password: "admin123" };
 const DEFAULT_PHONE = "919344889116";
 
-const DEFAULT_PRODUCTS = [];
+const DEFAULT_PRODUCTS = [
+  {
+    id: "p1",
+    name: "Classic Temple Gold Haram",
+    category: "necklaces",
+    price: 2450,
+    image: "necklace.png",
+    description: "Premium 24K gold plated traditional temple haram necklace, featuring exquisite classical engraving work and drop beads."
+  },
+  {
+    id: "p2",
+    name: "Brilliant Kundan Gold Jhumkas",
+    category: "earrings",
+    price: 650,
+    image: "earrings.png",
+    description: "Luxury micro-plated gold jhumka earrings set with stunning semi-precious Kundan stones and delicate pearl drops."
+  },
+  {
+    id: "p3",
+    name: "Antique Hand-Carved Bangles Set",
+    category: "bangles",
+    price: 1250,
+    size: "2.6",
+    image: "bangles.png",
+    description: "A gorgeous set of 4 antique gold plated bangles, featuring highly detailed hand-carved classical Indian patterns."
+  },
+  {
+    id: "p4",
+    name: "Royal Peacock Pendant Chain",
+    category: "chains",
+    price: 950,
+    image: "chain.png",
+    description: "Elegant 24K gold micro-plated designer daily wear chain with a hand-enameled royal peacock designer pendant."
+  },
+  {
+    id: "p5",
+    name: "Adjustable Traditional Vanki Ring",
+    category: "rings",
+    price: 380,
+    size: "Adjustable",
+    image: "rings.png",
+    description: "Traditional south Indian Vanki style chevron gold plated ring. Elegant structure with a comfortable adjustable band."
+  }
+];
 
 // ─── FIREBASE INIT ───
 let db = null;
@@ -204,12 +247,19 @@ async function fbSetPhone(phone) {
 async function getProducts() {
   if (fbReady) {
     try {
-      return await fbGetProducts();
+      const fbProducts = await fbGetProducts();
+      if (fbProducts && fbProducts.length > 0) {
+        return fbProducts;
+      }
     } catch (e) {
       console.warn("FB read failed:", e.message);
     }
   }
-  return getProductsLocal();
+  const localProducts = getProductsLocal();
+  if (localProducts && localProducts.length > 0) {
+    return localProducts;
+  }
+  return DEFAULT_PRODUCTS;
 }
 async function getPhone() {
   if (fbReady) {
