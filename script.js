@@ -302,7 +302,7 @@ async function bookViaWhatsAppById(productId) {
   const products = await getProducts();
   const product = products.find((p) => p.id === productId);
   if (!product) return;
-  const phone = await getPhone();
+  const phone = "919344889116";
   const sizeStr = product.size ? ` (Size: ${product.size})` : "";
   const msg = `🛒 *Order Enquiry — Sri Saravana Covering*\n\n📦 Item: ${product.name}${sizeStr}\n💰 Price: ₹${Number(product.price).toLocaleString("en-IN")}\n🏷️ Category: ${product.category}\n\nI would like to book this item. Please confirm availability.`;
 
