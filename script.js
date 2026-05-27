@@ -305,10 +305,59 @@ async function bookViaWhatsAppById(productId) {
   const phone = await getPhone();
   const sizeStr = product.size ? ` (Size: ${product.size})` : "";
   const msg = `🛒 *Order Enquiry — Sri Saravana Covering*\n\n📦 Item: ${product.name}${sizeStr}\n💰 Price: ₹${Number(product.price).toLocaleString("en-IN")}\n🏷️ Category: ${product.category}\n\nI would like to book this item. Please confirm availability.`;
+
+  // Try sharing image + text via Web Share API (works on mobile)
+  if (navigator.share && navigator.canShare) {
+    try {
+      const imageFile = await getImageFile(product.image, product.name);
+      if (imageFile && navigator.canShare({ files: [imageFile] })) {
+        await navigator.share({
+          text: msg,
+          files: [imageFile],
+        });
+        return;
+      }
+    } catch (e) {
+      // User cancelled or share failed — fall through to WhatsApp link
+      if (e.name === "AbortError") return;
+    }
+  }
+
+  // Fallback: open WhatsApp with text + image link
+  let imgUrl = "";
+  if (product.image && !product.image.startsWith("data:")) {
+    imgUrl = new URL(product.image, window.location.href).href;
+  }
+  const fallbackMsg = imgUrl
+    ? msg + `\n\n📸 Product Image: ${imgUrl}`
+    : msg;
   window.open(
-    `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(msg)}`,
+    `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(fallbackMsg)}`,
     "_blank",
   );
+}
+
+// Convert image source (base64 or URL) to a File object for sharing
+async function getImageFile(imageSrc, productName) {
+  try {
+    let blob;
+    if (imageSrc.startsWith("data:")) {
+      // Base64 image — convert to blob
+      const res = await fetch(imageSrc);
+      blob = await res.blob();
+    } else {
+      // URL image — fetch it
+      const res = await fetch(imageSrc);
+      if (!res.ok) return null;
+      blob = await res.blob();
+    }
+    const ext = blob.type.split("/")[1] || "jpeg";
+    const safeName = productName.replace(/[^a-zA-Z0-9]/g, "_").substring(0, 30);
+    return new File([blob], `${safeName}.${ext}`, { type: blob.type });
+  } catch (e) {
+    console.warn("Could not create image file for sharing:", e.message);
+    return null;
+  }
 }
 
 // ─── RENDER PRODUCTS (public) ───
