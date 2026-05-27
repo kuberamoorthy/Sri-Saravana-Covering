@@ -129,7 +129,12 @@
                                 <option value="bridal">Bridal Sets</option>
                                 <option value="chains">Chains</option>
                                 <option value="rings">Rings</option>
+                                <option value="other">Other (Type your own)</option>
                             </select>
+                        </div>
+                        <div class="form-group" id="pcustom-cat-group" style="display:none;">
+                            <label for="pcustom-cat">Custom Category Name</label>
+                            <input type="text" id="pcustom-cat" name="pcustom-cat" placeholder="e.g. Anklets, Pendants, Waist Chains...">
                         </div>
                         <div class="form-group" id="psize-group" style="display:none;">
                             <label for="psize">Product Size</label>
@@ -187,7 +192,12 @@
                         <option value="bridal">Bridal Sets</option>
                         <option value="chains">Chains</option>
                         <option value="rings">Rings</option>
+                        <option value="other">Other (Type your own)</option>
                     </select>
+                </div>
+                <div class="form-group" id="edit-custom-cat-group" style="display:none;">
+                    <label>Custom Category Name</label>
+                    <input type="text" id="edit-custom-cat" placeholder="e.g. Anklets, Pendants, Waist Chains...">
                 </div>
                 <div class="form-group" id="edit-size-group" style="display:none;">
                     <label>Product Size</label>
@@ -281,20 +291,31 @@
                 showDashboard();
             }
 
-            // Wire up category size triggers
+            // Wire up category size + custom category triggers
             const pcat = document.getElementById('pcategory');
             const psizeGroup = document.getElementById('psize-group');
             const psize = document.getElementById('psize');
+            const pcustomGroup = document.getElementById('pcustom-cat-group');
+            const pcustomInput = document.getElementById('pcustom-cat');
             if (pcat && psizeGroup && psize) {
-                pcat.addEventListener('change', () => handleCategoryChange(pcat, psizeGroup, psize));
+                pcat.addEventListener('change', () => {
+                    handleCategoryChange(pcat, psizeGroup, psize);
+                    handleCustomCategory(pcat, pcustomGroup, pcustomInput);
+                });
                 handleCategoryChange(pcat, psizeGroup, psize);
+                handleCustomCategory(pcat, pcustomGroup, pcustomInput);
             }
 
             const editCat = document.getElementById('edit-category');
             const editSizeGroup = document.getElementById('edit-size-group');
             const editSize = document.getElementById('edit-size');
+            const editCustomGroup = document.getElementById('edit-custom-cat-group');
+            const editCustomInput = document.getElementById('edit-custom-cat');
             if (editCat && editSizeGroup && editSize) {
-                editCat.addEventListener('change', () => handleCategoryChange(editCat, editSizeGroup, editSize));
+                editCat.addEventListener('change', () => {
+                    handleCategoryChange(editCat, editSizeGroup, editSize);
+                    handleCustomCategory(editCat, editCustomGroup, editCustomInput);
+                });
             }
         });
     </script>

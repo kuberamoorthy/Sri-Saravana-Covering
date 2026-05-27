@@ -84,7 +84,6 @@
                 <p>Handpicked designs from our latest collection — crafted at our Mayiladuthurai factory</p>
                 <div class="divider"></div>
             </div>
-            <div class="products-grid" id="featured-grid"></div>
             <div style="text-align:center;margin-top:40px;">
                 <a href="products.html" class="btn btn-outline">View All Products →</a>
             </div>
@@ -253,11 +252,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="firebase-config.js"></script>
     <script src="script.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            const products = await getProducts();
-            renderProducts('featured-grid', products.slice(0, 6));
-        });
-    </script>
+
 </body>
 </html>

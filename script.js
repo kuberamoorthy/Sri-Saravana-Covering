@@ -3,7 +3,7 @@
 // Database: Firebase Firestore (localStorage fallback)
 // ═══════════════════════════════════════════════════════════
 
-const ADMIN_CREDENTIALS = { username: "admin", password: "admin123" };
+const ADMIN_CREDENTIALS = { username: "mahesh", password: "mahesh123" };
 const DEFAULT_PHONE = "919344889116";
 
 const DEFAULT_PRODUCTS = [
@@ -403,7 +403,17 @@ async function addProduct(e) {
   try {
     if (fileInput.files && fileInput.files[0])
       image = await compressImage(fileInput.files[0]);
-    const cat = form.pcategory.value;
+    let cat = form.pcategory.value;
+    if (cat === "other") {
+      const customCat = document.getElementById("pcustom-cat");
+      if (customCat && customCat.value.trim()) {
+        cat = customCat.value.trim().toLowerCase();
+      } else {
+        showToast("❌ Please enter a custom category name");
+        if (btn) { btn.disabled = false; btn.textContent = "➕ Add Product"; }
+        return;
+      }
+    }
     const product = {
       name: form.pname.value.trim(),
       category: cat,
@@ -436,6 +446,11 @@ async function addProduct(e) {
     // Reset size field display
     const sizeGroup = document.getElementById("psize-group");
     if (sizeGroup) sizeGroup.style.display = "none";
+    // Reset custom category field
+    const customGroup = document.getElementById("pcustom-cat-group");
+    if (customGroup) customGroup.style.display = "none";
+    const customInput = document.getElementById("pcustom-cat");
+    if (customInput) customInput.value = "";
     renderAdminProducts("admin-products");
     showToast(
       "✅ Product saved to " + (fbReady ? "Firebase!" : "local storage!"),
@@ -480,12 +495,25 @@ async function editProduct(id) {
     if (!modal) return;
     document.getElementById("edit-id").value = p.id;
     document.getElementById("edit-name").value = p.name;
-    document.getElementById("edit-category").value = p.category;
     document.getElementById("edit-price").value = p.price;
     document.getElementById("edit-desc").value = p.description;
 
-    // Handle Size rendering for Edit Modal
+    // Handle custom category for Edit Modal
     const editCatSelect = document.getElementById("edit-category");
+    const editCustomGroup = document.getElementById("edit-custom-cat-group");
+    const editCustomInput = document.getElementById("edit-custom-cat");
+    const standardCats = ["necklaces", "earrings", "bangles", "bridal", "chains", "rings"];
+    if (standardCats.includes(p.category)) {
+      editCatSelect.value = p.category;
+      if (editCustomGroup) editCustomGroup.style.display = "none";
+      if (editCustomInput) editCustomInput.value = "";
+    } else {
+      editCatSelect.value = "other";
+      if (editCustomGroup) editCustomGroup.style.display = "block";
+      if (editCustomInput) editCustomInput.value = p.category;
+    }
+
+    // Handle Size rendering for Edit Modal
     const editSizeGroup = document.getElementById("edit-size-group");
     const editSizeSelect = document.getElementById("edit-size");
     if (editCatSelect && editSizeGroup && editSizeSelect) {
@@ -522,7 +550,17 @@ async function saveEdit(e) {
     let image = existing ? existing.image : "necklace.png";
     if (fileInput.files && fileInput.files[0])
       image = await compressImage(fileInput.files[0]);
-    const cat = document.getElementById("edit-category").value;
+    let cat = document.getElementById("edit-category").value;
+    if (cat === "other") {
+      const customCat = document.getElementById("edit-custom-cat");
+      if (customCat && customCat.value.trim()) {
+        cat = customCat.value.trim().toLowerCase();
+      } else {
+        showToast("❌ Please enter a custom category name");
+        if (btn) { btn.disabled = false; btn.textContent = "💾 Save Changes"; }
+        return;
+      }
+    }
     const data = {
       name: document.getElementById("edit-name").value.trim(),
       category: cat,
@@ -670,6 +708,19 @@ function handleCategoryChange(selectEl, groupEl, sEl) {
   } else {
     groupEl.style.display = "none";
     sEl.innerHTML = "";
+  }
+}
+
+// ─── CUSTOM CATEGORY TOGGLE ───
+function handleCustomCategory(selectEl, groupEl, inputEl) {
+  if (!selectEl || !groupEl || !inputEl) return;
+  if (selectEl.value === "other") {
+    groupEl.style.display = "block";
+    inputEl.setAttribute("required", "true");
+  } else {
+    groupEl.style.display = "none";
+    inputEl.removeAttribute("required");
+    inputEl.value = "";
   }
 }
 
